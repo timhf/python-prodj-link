@@ -26,7 +26,7 @@ Use your distributions package management to install these, e.g. on Arch Linux:
 pacman -S python-construct python-pyqt5 python-netifaces python-opengl
 ```
 
-Alternatively, you can use pip to install the required dependencies, preferrably in a virtualenv:
+Alternatively, you can use pip to install the required dependencies, preferably in a virtualenv:
 ```
 python3 -m virtualenv venv
 venv/bin/pip install -r requirements.txt
@@ -43,7 +43,7 @@ python3 test_runner.py
 ### Network configuration
 
 You need to be on the same Ethernet network as the players are discovered using broadcasts.
-The players will aquire IPs using DHCP if a server is available, otherwise they fall back to IPv4 autoconfiguration.
+The players will acquire IPs using DHCP if a server is available, otherwise they fall back to IPv4 autoconfiguration.
 If there is no DHCP server on your network, make sure you assign a IP address inside 169.254.0.0/16 to yourself, for example using NetworkManager or avahi-autoipd.
 
 You can test your setup using wireshark or tcpdump to see if you receive keepalive broadcast on port 50000.
@@ -76,7 +76,7 @@ To create midi clocks with exact timing, this additionally requires the [alsaseq
 Depending on your distribution you may need to gain privileges to access the sequencer _/dev/snd/seq_.
 On Arch Linux, membership in the _audio_ group is required.
 
-By default, the first midi seqencer is used.
+By default, the first midi sequencer is used.
 You can list available ports with argument _-l_.
 
     ./midiclock.py
@@ -94,6 +94,7 @@ Be careful when using it in an live environment!
 If you experience any errors or have additional features, feel free to open an issue or pull request.
 I have already **successfully tested** the script against the following players/mixers:
 
+* Pioneer CDJ 3000
 * Pioneer CDJ 2000
 * Pioneer CDJ 2000 Nexus
 * Pioneer CDJ 2000 NXS2
