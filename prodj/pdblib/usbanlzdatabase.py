@@ -12,10 +12,15 @@ class UsbAnlzDatabase(dict):
       raise KeyError("UsbAnlzDatabase: no beatgrid found")
     return self["beatgrid"]
 
-  def get_cue_points(self):
-    if not "cue_points" in self:
-      raise KeyError("UsbAnlzDatabase: no cue points found")
-    return self["cue_points"]
+  def get_memory_cues(self):
+    if not "memory_cues" in self:
+      raise KeyError("UsbAnlzDatabase: no memory cue points found")
+    return self["memory_cues"]
+
+  def get_hot_cues(self):
+    if not "hot_cues" in self:
+      raise KeyError("UsbAnlzDatabase: no hot cue points found")
+    return self["hot_cues"]
 
   def get_waveform(self):
     if not "waveform" in self:
@@ -44,6 +49,20 @@ class UsbAnlzDatabase(dict):
       return
     self[target] = obj.content.entries
 
+  def collect_cue_points(self):
+    if "PCOB" not in [t.type for t in self.parsed.tags]:
+      logging.warning("no cue information found in file")
+      return
+    # Usually there are 2 PCOB entires, one for hot cues and another one for memory cues
+    pcob_entries = [t for t in self.parsed.tags if t.type == "PCOB"]
+    for entry in pcob_entries:
+      if entry.content.type == 'memory':
+        self['memory_cues'] = entry.content.entries
+        logging.info(f"found {len(entry)} memory cues in DAT file")
+      elif entry.content.type == 'hotcue':
+        self['hot_cues'] = entry.content.entries
+        logging.info(f"found {len(entry)} hot cues in DAT file")
+
   def _load_file(self, filename):
     with open(filename, "rb") as f:
       self.parsed = AnlzFile.parse_stream(f)
@@ -54,8 +73,8 @@ class UsbAnlzDatabase(dict):
   def _parse_dat(self):
     logging.debug("Loaded %d tags", len(self.parsed.tags))
     self.collect_entries("PWAV", "preview_waveform")
-    self.collect_entries("PCOB", "cue_points")
     self.collect_entries("PQTZ", "beatgrid")
+    self.collect_cue_points()
     self.parsed = None
 
   def _parse_ext(self):
@@ -63,8 +82,6 @@ class UsbAnlzDatabase(dict):
     self.collect_entries("PWV3", "waveform")
     self.collect_entries("PWV4", "color_preview_waveform")
     self.collect_entries("PWV5", "color_waveform")
-    # TODO: collect PCOB here as well?
-    # self.collect_entries("PCOB", "cue_points")
     self.parsed = None
 
   def load_dat_buffer(self, data):

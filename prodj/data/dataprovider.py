@@ -128,6 +128,12 @@ class DataProvider(Thread):
   def get_track_info(self, player_number, slot, track_id, callback=None):
     self._enqueue_request("track_info", None, (player_number, slot, track_id), callback)
 
+  def get_memory_cues(self, player_number, slot, track_id, callback=None):
+    self._enqueue_request("memory_cues", None, (player_number, slot, track_id), callback)
+
+  def get_hot_cues(self, player_number, slot, track_id, callback=None):
+    self._enqueue_request("hot_cues", None, (player_number, slot, track_id), callback)
+
   def _enqueue_request(self, request, store, params, callback):
     player_number = params[0]
     if player_number == 0 or player_number > 4:

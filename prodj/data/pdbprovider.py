@@ -195,6 +195,22 @@ class PDBProvider:
       logging.warning("No beatgrid for {}, returning empty data".format((player_number, slot, track_id)))
       return None
 
+  def get_hot_cues(self, player_number, slot, track_id):
+    db = self.get_anlz(player_number, slot, track_id)
+    try:
+      return db.get_hot_cues()
+    except KeyError as e:
+      logging.warning("No hot cues for {}, returning None".format((player_number, slot, track_id)))
+      return None
+
+  def get_memory_cues(self, player_number, slot, track_id):
+    db = self.get_anlz(player_number, slot, track_id)
+    try:
+      return db.get_memory_cues()
+    except KeyError as e:
+      logging.warning("No memory cues for {}, returning None".format((player_number, slot, track_id)))
+      return None
+
   def get_mount_info(self, player_number, slot, track_id):
     db = self.get_db(player_number, slot)
     track = db.get_track(track_id)
@@ -402,5 +418,9 @@ class PDBProvider:
       return self.get_beatgrid(*params)
     elif request == "mount_info":
       return self.get_mount_info(*params)
+    elif request == "memory_cues":
+      return self.get_memory_cues(*params)
+    elif request == "hot_cues":
+      return self.get_hot_cues(*params)
     else:
       raise FatalQueryError("invalid request type {}".format(request))
