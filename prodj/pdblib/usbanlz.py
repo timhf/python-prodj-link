@@ -101,7 +101,7 @@ AnlzTagCueObject = Struct(
   "type" / AnlzTagCueObjectType,
   "count" / Int32ub,
   "memory_count" / Int32ub,
-  "entries" / Array(this.count, AnlzCuePoint)
+  "entries" / GreedyRange(AnlzCuePoint)
 )
 
 AnlzCuePoint2 = Struct(
