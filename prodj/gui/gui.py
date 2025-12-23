@@ -308,8 +308,8 @@ class PlayerWidget(QFrame):
 
   def setOnAir(self, on_air):
     self.setProperty("on_air", on_air)
-    self.style().unpolish(self);
-    self.style().polish(self);
+    self.style().unpolish(self)
+    self.style().polish(self)
     self.update()
 
 class Gui(QWidget):

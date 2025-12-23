@@ -270,6 +270,7 @@ class GLWaveformWidget(QOpenGLWidget):
       gl.glEnd()
       gl.glEndList()
       self.beatgrid_data = None # delete data after rendering
+
   def renderLoop(self):
     if not self.loop:
       return

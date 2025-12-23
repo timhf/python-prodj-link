@@ -46,10 +46,10 @@ class UsbAnlzDatabase(dict):
 
   def _load_file(self, filename):
     with open(filename, "rb") as f:
-      self.parsed = AnlzFile.parse_stream(f);
+      self.parsed = AnlzFile.parse_stream(f)
 
   def _load_buffer(self, data):
-    self.parsed = AnlzFile.parse(data);
+    self.parsed = AnlzFile.parse(data)
 
   def _parse_dat(self):
     logging.debug("Loaded %d tags", len(self.parsed.tags))
