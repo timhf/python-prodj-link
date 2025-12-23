@@ -34,6 +34,8 @@ class GLWaveformWidget(QOpenGLWidget):
     self.zoom_seconds = 4
     self.loop = None  # tuple(start_sec, end_sec)
     self.pitch = 1 # affects animation speed
+    self.memory_cues = []
+    self.hot_cues = []
 
     self.viewport = (50, 40) # viewport +- x, y
     self.waveform_lines_per_x = 150
@@ -83,6 +85,14 @@ class GLWaveformWidget(QOpenGLWidget):
     if self.loop != loop:
       self.loop = loop
       self.update()
+
+  def setMemoryCues(self, cues: list[float]):
+    self.memory_cues = cues
+    self.update()
+
+  def setHotCues(self, cues: list[tuple[float, int, int]]):
+    self.hot_cues = cues
+    self.update()
 
   # current time in seconds at position marker
   def setPosition(self, position, pitch=1, state="playing"):
@@ -169,6 +179,8 @@ class GLWaveformWidget(QOpenGLWidget):
     # draw waveform and beatgrid
     self.renderWaveform()
     self.renderBeatgrid()
+    self.renderMemoryCues()
+    self.renderHotCues()
     gl.glCallList(self.lists+1)
     gl.glCallList(self.lists+2)
 
@@ -243,6 +255,31 @@ class GLWaveformWidget(QOpenGLWidget):
       gl.glVertex3f((x+1)/self.waveform_lines_per_x, height+1, 0)
       gl.glVertex3f(x/self.waveform_lines_per_x, height+1, 0)
       gl.glEnd()
+
+  def renderMemoryCues(self):
+    gl.glBegin(gl.GL_TRIANGLES)
+    for cue in self.memory_cues:
+      height = 10
+      x = cue / 1000
+      gl.glColor3f(1, 1, 0)
+      gl.glVertex3f(x,self.viewport[1]-height,0)
+      gl.glVertex3f(x + 0.100,self.viewport[1],0)
+      gl.glVertex3f(x - 0.100,self.viewport[1],0)
+    gl.glEnd()
+    
+  def renderHotCues(self):
+    gl.glBegin(gl.GL_TRIANGLES)
+    for position, color, name in self.hot_cues:
+      height = 10
+      x = position / 1000
+      gl.glColor3f(1, 1, 0)
+      gl.glVertex3f(x, self.viewport[1]-height, 0)
+      gl.glVertex3f(x + 0.1, self.viewport[1], 0)
+      gl.glVertex3f(x - 0.1, self.viewport[1], 0)
+      gl.glVertex3f(x - 0.1, -1*self.viewport[1], 0)
+      gl.glVertex3f(x + 0.1, -1*self.viewport[1], 0)
+      gl.glVertex3f(x, -1*self.viewport[1]+height, 0)
+    gl.glEnd()
 
   def renderBeatgrid(self):
     with self.data_lock:

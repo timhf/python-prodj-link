@@ -4,8 +4,8 @@ import sys
 from threading import Lock
 from PyQt5.QtWidgets import QApplication, QHBoxLayout
 from PyQt5.QtWidgets import QWidget
-from PyQt5.QtGui import QColor, QPainter, QPixmap
-from PyQt5.QtCore import pyqtSignal, Qt, QSize
+from PyQt5.QtGui import QColor, QPainter, QPixmap, QFont
+from PyQt5.QtCore import pyqtSignal, Qt, QSize, QPoint
 
 from prodj.pdblib.usbanlzdatabase import UsbAnlzDatabase
 from .waveform_blue_map import blue_map
@@ -16,7 +16,7 @@ class PreviewWaveformWidget(QWidget):
   def __init__(self, parent):
     super().__init__(parent)
     self.pixmap_width = 400
-    self.pixmap_height = 34
+    self.pixmap_height = 42
     self.top_offset = 8
     self.total_height = self.pixmap_height + self.top_offset
     self.setMinimumSize(self.pixmap_width, self.total_height)
@@ -27,6 +27,9 @@ class PreviewWaveformWidget(QWidget):
     self.loop = None    # tuple(start_rel, end_rel) -> in [0, 1]
     self.redraw_signal.connect(self.update)
     self.colored_render_blue_only = False
+    self.memory_cues = []
+    self.hot_cues = []
+    self.track_duration_for_cues = None
 
   def clear(self):
     self.setData(None)
@@ -38,6 +41,22 @@ class PreviewWaveformWidget(QWidget):
         self.pixmap = self.drawColoredPreviewWaveformPixmap()
       else:
         self.pixmap = self.drawPreviewWaveformPixmap()
+    self.redraw_signal.emit()
+
+  def setMemoryCues(self, memory_cues):
+    # Input for memory cues is a list of scaled time data (normalized to 0-1)
+    assert type(memory_cues) is list, "memory cue information has to be a list"
+    assert len(memory_cues) == 0 or type(memory_cues[0]) is int, \
+      "memory cue information has to be a list of int"
+    self.memory_cues = memory_cues if memory_cues is not None else []
+    self.redraw_signal.emit()
+
+  def setHotCues(self, hot_cues):
+    # Input for hot cues are tuples of [scaled time, name, color]
+    assert type(hot_cues) is list, "memory cue information has to be a list"
+    assert len(hot_cues) == 0 or type(hot_cues[0]) is tuple, \
+      "memory cue information has to be a list of tuples"
+    self.hot_cues = hot_cues if hot_cues is not None else []
     self.redraw_signal.emit()
 
   def setPosition(self, relative):
@@ -79,6 +98,51 @@ class PreviewWaveformWidget(QWidget):
         painter.fillRect(marker_position-3, 3, 7, 7, Qt.black)
         painter.fillRect(marker_position-2, 4, 5, 5, Qt.white)
         painter.fillRect(marker_position, 4, 1, height, Qt.white)
+        
+        # draw cue points
+        for position in self.memory_cues:
+          if self.track_duration_for_cues is None:
+            break
+          painter.setBrush(QColor(255, 0, 0))
+          painter.setPen(QColor(255, 0, 0))
+          # draw small triangle above waveform using a polygon
+          scaled_position = int(
+            (position / (self.track_duration_for_cues * 1000)) * scaled_pixmap.width()
+          )
+          points = [
+            QPoint(scaled_position, 16),
+            QPoint(scaled_position + 5, 8),
+            QPoint(scaled_position - 5, 8),
+          ]
+          painter.drawPolygon(points)
+        
+        # draw cue points
+        for position, name, color in self.hot_cues:
+          if self.track_duration_for_cues is None:
+            break
+          # TODO: add color information
+          painter.setBrush(QColor(100, 255, 100))
+          painter.setPen(QColor(100, 255, 100))
+          # draw small triangle above waveform using a polygon
+          scaled_position = int(
+            (position / (self.track_duration_for_cues * 1000)) * scaled_pixmap.width()
+          )
+          points = [
+            QPoint(scaled_position, 16),
+            QPoint(scaled_position + 5, 8),
+            QPoint(scaled_position - 5, 8),
+          ]
+          painter.drawPolygon(points)
+          points = [
+            QPoint(scaled_position, height - 13),
+            QPoint(scaled_position + 5, height - 5),
+            QPoint(scaled_position - 5, height - 5),
+          ]
+          painter.drawPolygon(points)
+          small_name_font = QFont()
+          small_name_font.setPixelSize(14)
+          painter.setFont(small_name_font)
+          painter.drawText(scaled_position+8, 20, name)
     painter.end()
 
   def drawPreviewWaveformPixmap(self):
@@ -96,10 +160,10 @@ class PreviewWaveformWidget(QWidget):
         height = height if height > 0 else 0
         color = blue_map[2] if self.data[2*x+1] > 3 else blue_map[6]
         painter.setPen(QColor(*color))
-        painter.drawLine(x, 31, x, 31-height)
+        painter.drawLine(x, 35, x, 35-height)
     painter.setPen(Qt.white)
     # base line
-    painter.drawLine(0, 33, self.pixmap_width-1, 33)
+    painter.drawLine(0, 37, self.pixmap_width-1, 37)
     painter.end()
     return pixmap
 
@@ -170,12 +234,12 @@ class PreviewWaveformWidget(QWidget):
         xd = int(x * xr)
         if int((x + 1) * xr) > xd:
           painter.setPen(QColor(int(red * .75), int(green * .75), int(blue * .75)))
-          painter.drawLine(xd, 31, xd, 31 - int(max_back_height / 4))
+          painter.drawLine(xd, 35, xd, 35 - int(max_back_height / 4))
           painter.setPen(QColor(int(red), int(green), int(blue)))
-          painter.drawLine(xd, 31, xd, 31 - int(max_front_height / 4))
+          painter.drawLine(xd, 35, xd, 35 - int(max_front_height / 4))
           max_back_height = max_front_height = 0
     painter.setPen(Qt.white)
-    painter.drawLine(0, 33, self.pixmap_width-1, 33)
+    painter.drawLine(0, 37, self.pixmap_width-1, 37)
     painter.end()
     return pixmap
 

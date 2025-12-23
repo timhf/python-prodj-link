@@ -139,10 +139,10 @@ class PlayerWidget(QFrame):
     self.waveform = GLWaveformWidget(self)
     self.waveform.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
     self.preview_waveform = PreviewWaveformWidget(self)
-    qsp = QSizePolicy(QSizePolicy.Preferred, QSizePolicy.Minimum)
+    qsp = QSizePolicy(QSizePolicy.Expanding, QSizePolicy.Minimum)
     qsp.setHeightForWidth(True)
     self.preview_waveform.setSizePolicy(qsp)
-    self.preview_waveform.setMaximumHeight(50)
+    self.preview_waveform.setMaximumHeight(65)
 
     # BPM / Pitch / Master display
     bpm_label = QLabel("BPM", self)
@@ -506,10 +506,19 @@ class Gui(QWidget):
         player.setMetadata(reply["title"], reply["artist"], reply["album"])
         player.setTime(0, reply["duration"])
         player.setTotalTime(reply["duration"])
+        player.preview_waveform.track_duration_for_cues = reply["duration"]
         if "artwork_id" in reply and reply["artwork_id"] != 0:
           self.prodj.data.get_artwork(source_player_number, slot, reply["artwork_id"], self.dbclient_callback)
         else:
           player.setArtwork(None)
+        # Only when meta data was received trigger the request for hot / memory cues from the DB,
+        # since we need the track duration to draw them on the preview waveform diagram.
+        # TODO: Technically there is also a packet to notify when a new hot or memory cue is stored
+        # during playback, so actually this should be fetch not only at loading the track but also
+        # whenever this packet is received.
+        self.prodj.data.get_memory_cues(source_player_number, slot, reply["track_id"], self.dbclient_callback)
+        self.prodj.data.get_hot_cues(source_player_number, slot, reply["track_id"], self.dbclient_callback)
+
       elif request == "artwork":
         player.setArtwork(reply)
       elif request == "waveform":
@@ -527,6 +536,16 @@ class Gui(QWidget):
         player.setArtwork(None) # no artwork for unanalyzed tracks
         player.waveform.clear()
         player.preview_waveform.clear()
+      elif request == "memory_cues":
+        player.waveform.setMemoryCues([c.time for c in reply])
+        player.preview_waveform.setMemoryCues([c.time for c in reply])
+      elif request == "hot_cues":
+        player.waveform.setHotCues(
+          [(c.time, chr(c.hotcue_number + ord('A') - 1), 0) for c in reply]
+        )
+        player.preview_waveform.setHotCues(
+          [(c.time, chr(c.hotcue_number + ord('A') - 1), 0) for c in reply]
+        )
       else:
         logging.warning("unhandled dbserver callback %s", request)
 
