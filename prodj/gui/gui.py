@@ -113,11 +113,11 @@ class PlayerWidget(QFrame):
     self.remain_label.setEnabled(False)
     self.time = ClickableLabel(self)
     self.time.setStyleSheet("QLabel { color: white; font: 32px; qproperty-alignment: AlignRight; }")
-    self.time.setMaximumHeight(32)
+    self.time.setMaximumHeight(36)
     self.total_time_label = QLabel("TOTAL", self)
     self.total_time = QLabel(self)
     self.total_time.setStyleSheet("QLabel { color: white; font: 32px; qproperty-alignment: AlignRight; }")
-    self.total_time.setMaximumHeight(32)
+    self.total_time.setMaximumHeight(36)
     self.beat_bar = BeatBarWidget(self)
 
     time_layout = QGridLayout()
