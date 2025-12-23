@@ -446,14 +446,12 @@ class Gui(QWidget):
     player.setSlotInfo(c.loaded_player_number, c.loaded_slot)
     if c.metadata is not None and "duration" in c.metadata:
       player.setTime(c.position, c.metadata["duration"])
-      player.setTotalTime(c.metadata["duration"])
       if c.position is not None:
         player.preview_waveform.setPosition(c.position / c.metadata["duration"])
       if c.loop_start is not None and c.loop_end is not None:
         player.preview_waveform.setLoop((c.loop_start / c.metadata["duration"], c.loop_end / c.metadata["duration"]))
     else:
       player.setTime(c.position, None)
-      player.setTotalTime(None)
     if len(c.fw) > 0:
       player.setPlayerInfo(c.model, c.ip_addr, c.fw)
 
@@ -506,6 +504,8 @@ class Gui(QWidget):
           logging.warning("empty metadata received")
           continue
         player.setMetadata(reply["title"], reply["artist"], reply["album"])
+        player.setTime(0, reply["duration"])
+        player.setTotalTime(reply["duration"])
         if "artwork_id" in reply and reply["artwork_id"] != 0:
           self.prodj.data.get_artwork(source_player_number, slot, reply["artwork_id"], self.dbclient_callback)
         else:
